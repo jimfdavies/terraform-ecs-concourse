@@ -112,7 +112,9 @@ resource "aws_security_group" "lb_sg" {
     protocol    = "tcp"
     from_port   = 80
     to_port     = 80
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [
+      "${var.admin_cidr_ingress}",
+    ]
   }
 
   egress {
