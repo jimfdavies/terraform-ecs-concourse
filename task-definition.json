@@ -1,22 +1,80 @@
 [
   {
-    "cpu": 256,
-    "essential": true,
-    "image": "${image_url}",
+    "name": "concourse-db",
+    "image": "postgres:9.5",
+    "cpu": 1,
     "memory": 512,
-    "name": "${container_name}",
+    "essential": true,
+    "environment": [
+      {
+        "name": "POSTGRES_DB",
+        "value": "concourse"
+      },
+      {
+        "name": "POSTGRES_USER",
+        "value": "concourse"
+      },
+      {
+        "name": "POSTGRES_PASSWORD",
+        "value": "iamconcourse"
+      },
+      {
+        "name": "PGDATA",
+        "value": "/database"
+      }
+    ]
+  },
+  {
+    "name": "concourse-web",
+    "image": "concourse/concourse",
+    "cpu": 1,
+    "memory": 512,
+    "essential": true,
     "portMappings": [
       {
-        "containerPort": 2368,
+        "containerPort": 8080,
         "hostPort": 8080
       }
     ],
-    "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-            "awslogs-group": "${log_group_name}",
-            "awslogs-region": "${log_group_region}"
-        }
-    }
+    "links": [
+      "concourse-db"
+    ],
+    "command": [
+      "web"
+    ],
+    "environment": [
+      {
+        "name": "CONCOURSE_BASIC_AUTH_PASSWORD",
+        "value": "iamconcourse"
+      },
+      {
+        "name": "CONCOURSE_BASIC_AUTH_USERNAME",
+        "value": "concourse"
+      },
+      {
+        "name": "CONCOURSE_EXTERNAL_URL",
+        "value": "https://concourse-elb:8080"
+      }
+    ]
+  },
+  {
+    "name": "concourse-worker",
+    "image": "concourse/concourse",
+    "cpu": 1,
+    "memory": 512,
+    "essential": true,
+    "privileged": true,
+    "command": [
+      "worker"
+    ],
+    "links": [
+      "concourse-web"
+    ],
+    "environment": [
+      {
+        "name": "CONCOURSE_TSA_HOST",
+        "value": "concourse-web"
+      }
+    ]
   }
 ]
