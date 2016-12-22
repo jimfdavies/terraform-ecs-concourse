@@ -22,6 +22,19 @@
         "name": "PGDATA",
         "value": "/database"
       }
+    ],
+    "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+            "awslogs-group": "${log_group_name}",
+            "awslogs-region": "${log_group_region}"
+        }
+    },
+    "mountPoints": [
+                {
+                    "sourceVolume": "database",
+                    "containerPath": "/database"
+                }
     ]
   },
   {
@@ -53,8 +66,25 @@
       },
       {
         "name": "CONCOURSE_EXTERNAL_URL",
-        "value": "https://concourse-elb:8080"
+        "value": "http://${alb_dns_name}:80"
+      },
+      {
+        "name": "CONCOURSE_POSTGRES_DATA_SOURCE",
+        "value": "postgres://concourse:iamconcourse@concourse-db:5432/concourse?sslmode=disable"
       }
+    ],
+    "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+            "awslogs-group": "${log_group_name}",
+            "awslogs-region": "${log_group_region}"
+        }
+    },
+    "mountPoints": [
+                {
+                    "sourceVolume": "keys",
+                    "containerPath": "/concourse-keys"
+                }
     ]
   },
   {
@@ -62,7 +92,7 @@
     "image": "concourse/concourse",
     "cpu": 1,
     "memory": 512,
-    "essential": true,
+    "essential": false,
     "privileged": true,
     "command": [
       "worker"
@@ -75,6 +105,19 @@
         "name": "CONCOURSE_TSA_HOST",
         "value": "concourse-web"
       }
+    ],
+    "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+            "awslogs-group": "${log_group_name}",
+            "awslogs-region": "${log_group_region}"
+        }
+    },
+    "mountPoints": [
+                {
+                    "sourceVolume": "keys",
+                    "containerPath": "/concourse-keys"
+                }
     ]
   }
 ]

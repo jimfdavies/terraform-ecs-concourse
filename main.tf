@@ -173,25 +173,32 @@ data "template_file" "task_definition" {
   vars {
     log_group_region = "${var.aws_region}"
     log_group_name   = "${aws_cloudwatch_log_group.app.name}"
+    alb_dns_name     = "${aws_alb.main.dns_name}"
   }
 }
 
 resource "aws_ecs_task_definition" "concourse" {
   family                = "tf_example_concourse_td"
   container_definitions = "${data.template_file.task_definition.rendered}"
+  volume {
+    name          = "keys"
+  }
+  volume {
+    name          = "database"
+  }
 }
 
 resource "aws_ecs_service" "test" {
   name            = "tf-example-ecs-concourse"
   cluster         = "${aws_ecs_cluster.main.id}"
   task_definition = "${aws_ecs_task_definition.concourse.arn}"
-  desired_count   = 1
+  desired_count   = 0
   iam_role        = "${aws_iam_role.ecs_service.name}"
 
   load_balancer {
     target_group_arn = "${aws_alb_target_group.test.id}"
-    container_name   = "concourse"
-    container_port   = "2368"
+    container_name   = "concourse-web"
+    container_port   = "8080"
   }
 
   depends_on = [
@@ -316,9 +323,11 @@ resource "aws_alb_listener" "front_end" {
 ## CloudWatch Logs
 
 resource "aws_cloudwatch_log_group" "ecs" {
-  name = "tf-ecs-group/ecs-agent"
+  name              = "tf-ecs-group/ecs-agent"
+  retention_in_days = 1
 }
 
 resource "aws_cloudwatch_log_group" "app" {
-  name = "tf-ecs-group/app-concourse"
+  name              = "tf-ecs-group/app-concourse"
+  retention_in_days = 1
 }
